@@ -1,4 +1,4 @@
-import { Task } from './task.entity';
+import { Task } from './entities/task.entity';
 import {
   Body,
   Controller,
