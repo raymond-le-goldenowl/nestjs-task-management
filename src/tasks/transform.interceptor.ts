@@ -4,8 +4,8 @@ import {
   Injectable,
   CallHandler,
 } from '@nestjs/common';
-import { classToPlain } from 'class-transformer';
 import { map, Observable } from 'rxjs';
+import { classToPlain } from 'class-transformer';
 
 @Injectable()
 export class TransformInterceptor implements NestInterceptor {

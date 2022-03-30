@@ -1,8 +1,8 @@
-import { User } from './../../auth/entities/auth.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
-import { TaskStatus } from '../task-status.enum';
 import { Exclude } from 'class-transformer';
+import { User } from '@auth/entities/auth.entity';
+import { TaskStatus } from '@tasks/task-status.enum';
 
 @Entity()
 export class Task {
