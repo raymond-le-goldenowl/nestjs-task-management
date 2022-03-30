@@ -1,14 +1,15 @@
-import { GetTasksFilterDto } from './dto/get-tasks-filter.dto';
 import { NotFoundException } from '@nestjs/common';
 import { EntityRepository, Repository } from 'typeorm';
 
 import { Task } from './entities/task.entity';
 import { TaskStatus } from './task-status.enum';
+import { User } from './../auth/entities/auth.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
+import { GetTasksFilterDto } from './dto/get-tasks-filter.dto';
 
 @EntityRepository(Task)
 export class TasksRepository extends Repository<Task> {
-  async createTask(createTaskDto: CreateTaskDto): Promise<Task> {
+  async createTask(createTaskDto: CreateTaskDto, user: User): Promise<Task> {
     // Destructuring
     const { title, description } = createTaskDto;
 
@@ -17,6 +18,7 @@ export class TasksRepository extends Repository<Task> {
       title,
       description,
       status: TaskStatus.OPEN,
+      user,
     });
 
     // save a task
@@ -26,9 +28,9 @@ export class TasksRepository extends Repository<Task> {
     return saved;
   }
 
-  async findById(id: string): Promise<Task> {
+  async findById(id: string, user: User): Promise<Task> {
     // get task by id
-    const found = await this.findOne({ where: { id } });
+    const found = await this.findOne({ where: { id, user } });
 
     // is task found
     if (!found) {
@@ -39,9 +41,9 @@ export class TasksRepository extends Repository<Task> {
     return found;
   }
 
-  async deleteTask(id: string): Promise<Task> {
+  async deleteTask(id: string, user: User): Promise<Task> {
     // get task deleted
-    const found = await this.findById(id);
+    const found = await this.findById(id, user);
 
     // delete task
     const deleted = await this.delete(found);
@@ -55,9 +57,14 @@ export class TasksRepository extends Repository<Task> {
     return found;
   }
 
-  async updateTaskStatus(id: string, status: TaskStatus): Promise<Task> {
+  async updateTaskStatus(
+    id: string,
+    status: TaskStatus,
+    user: User,
+  ): Promise<Task> {
     // get task
-    const found = await this.findById(id);
+
+    const found = await this.findById(id, user);
     // change status
 
     found.status = status;
@@ -67,24 +74,36 @@ export class TasksRepository extends Repository<Task> {
     return updated;
   }
 
-  async getTasks(getTasksFilterDto: GetTasksFilterDto): Promise<Task[]> {
-    const query = this.createQueryBuilder('task');
-
+  async getTasks(
+    getTasksFilterDto: GetTasksFilterDto,
+    user: User,
+  ): Promise<Task[]> {
+    // destruct data from request
     const { status, search } = getTasksFilterDto;
 
+    // create query builder
+    const query = this.createQueryBuilder('task');
+
+    // get tasks where user is owner
+    query.where({ user });
+
+    // filter by status
     if (status) {
       query.andWhere('task.status = :status', { status });
     }
 
+    // filter by search
     if (search) {
       query.andWhere(
-        'LOWER(task.title) LIKE LOWER(:search) OR LOWER(task.description) LIKE LOWER(:search)',
+        '(LOWER(task.title) LIKE LOWER(:search) OR LOWER(task.description) LIKE LOWER(:search))',
         { search: `%${search}%` },
       );
     }
 
+    // get tasks
     const tasks: Task[] = await query.getMany();
 
+    // return tasks on database
     return tasks;
   }
 }
