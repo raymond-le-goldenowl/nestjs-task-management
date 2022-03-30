@@ -1,3 +1,4 @@
+import { AuthGuard } from '@nestjs/passport';
 import { Task } from './entities/task.entity';
 import {
   Body,
@@ -8,6 +9,7 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -21,6 +23,7 @@ export class TasksController {
   constructor(private taskService: TasksService) {}
 
   @Get()
+  @UseGuards(AuthGuard())
   getTasks(@Query() getTasksFilter: GetTasksFilterDto): Promise<Task[]> {
     return this.taskService.getTasks(getTasksFilter);
   }
